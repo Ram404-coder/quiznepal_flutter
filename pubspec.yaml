@@ -1,0 +1,31 @@
+name: quiznepal  # Change this line
+description: A mobile quiz application about Nepal.
+publish_to: 'none'
+version: 1.0.0+1 # Initial version
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' # Updated SDK constraint
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.1  # State management
+  simple_animations: ^5.2.0  # For animations
+  firebase_core: ^4.2.1  # Firebase core
+  audioplayers: ^6.3.1 # Audio playback
+  crypto: ^3.0.7  # For hashing and encryption
+  shared_preferences: ^2.2.2  # Local storage
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0 
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/correct.mp3 # directory for sound files
+    - assets/audio/wrong.mp3
+    - assets/audio/finish.mp3
+    - assets/images/logo.png # directory for image files
+    
