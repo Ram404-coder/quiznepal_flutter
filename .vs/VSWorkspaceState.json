@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\build",
+    "\\build\\flutter_assets",
+    "\\build\\flutter_assets\\assets",
+    "\\build\\flutter_assets\\assets\\audio",
+    "\\lib",
+    "\\lib\\screens"
+  ],
+  "SelectedNode": "\\lib\\screens\\level_selection_screen.dart",
+  "PreviewInSolutionExplorer": false
+}

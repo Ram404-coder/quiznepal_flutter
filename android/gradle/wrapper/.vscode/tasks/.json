@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "gradle build",
+            "type": "shell",
+            "command": "./gradlew build",
+            "options": {
+                "env": {
+                    "JAVA_HOME": "C:\\Program Files\\OpenJDK\\jdk-11.0.16.20220913"
+                }
+            }
+        }
+    ]
+}

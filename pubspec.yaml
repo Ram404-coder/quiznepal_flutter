@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.1.1  # State management
+  sqflite_common_ffi: ^2.3.0+1
+  sqflite: ^2.3.0  # SQLite database
+  path: ^1.8.3  # For file path manipulation
+ 
+
   simple_animations: ^5.2.0  # For animations
   firebase_core: ^4.2.1  # Firebase core
   audioplayers: ^6.3.1 # Audio playback
@@ -22,10 +27,14 @@ dev_dependencies:
   flutter_lints: ^6.0.0 
 
 flutter:
+  
   uses-material-design: true
+ 
   assets:
     - assets/audio/correct.mp3 # directory for sound files
     - assets/audio/wrong.mp3
     - assets/audio/finish.mp3
-    - assets/images/logo.png # directory for image files
+    - assets/images/logo.png
+    - assets/audio/timer_beep.mp3  # directory for audio files
+     # directory for image files
     

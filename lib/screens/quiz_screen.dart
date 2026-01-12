@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'results_screen.dart';
 import '../services/auth_service.dart';
 import '../services/quiz_service.dart';
 import '../utils/colors.dart';
-
+import '../services/audio_service.dart'; // NEW: Import AudioService
 
 class QuizScreen extends StatefulWidget {
   final String level;
@@ -28,10 +27,6 @@ class _QuizScreenState extends State<QuizScreen> {
   Timer? _timer;
   bool _isTimerRunning = true;
 
-  // AUDIO PLAYER
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  bool _isMuted = false;
-
   Map<String, String> get _levelTitles {
     return {
       'easy': 'Easy Level',
@@ -43,62 +38,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    _preloadSounds();
     _startTimer();
-  }
-
-  // PRELOAD SOUNDS FOR FASTER PLAYBACK
-  Future<void> _preloadSounds() async {
-    try {
-      await _audioPlayer.setSource(AssetSource('audio/correct.mp3'));
-      await _audioPlayer.setSource(AssetSource('audio/wrong.mp3'));
-      await _audioPlayer.setSource(AssetSource('audio/finish.mp3'));
-    } catch (e) {
-      debugPrint('Error preloading sounds: $e');
-    }
-  }
-
-  // PLAY CORRECT ANSWER SOUND
-  Future<void> _playCorrectSound() async {
-    if (_isMuted) return;
-    try {
-      await _audioPlayer.play(AssetSource('audio/correct.mp3'));
-    } catch (e) {
-      debugPrint('Error playing correct sound: $e');
-    }
-  }
-
-  // PLAY WRONG ANSWER SOUND
-  Future<void> _playWrongSound() async {
-    if (_isMuted) return;
-    try {
-      await _audioPlayer.play(AssetSource('audio/wrong.mp3'));
-    } catch (e) {
-      debugPrint('Error playing wrong sound: $e');
-    }
-  }
-
-  // PLAY QUIZ FINISH SOUND
-  Future<void> _playFinishSound() async {
-    if (_isMuted) return;
-    try {
-      await _audioPlayer.play(AssetSource('audio/finish.mp3'));
-    } catch (e) {
-      debugPrint('Error playing finish sound: $e');
-    }
-  }
-
-  // TOGGLE MUTE/UNMUTE
-  void _toggleMute() {
-    setState(() {
-      _isMuted = !_isMuted;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isMuted ? 'Sounds muted 🔇' : 'Sounds unmuted 🔊'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
   }
 
   void _startTimer() {
@@ -117,7 +57,8 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _timeUp() {
-    _playWrongSound(); // Play wrong sound when time's up
+    // Play wrong sound when time's up
+    AudioService().playWrong();
 
     setState(() {
       _isAnswered = true;
@@ -148,7 +89,6 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _audioPlayer.dispose(); // Dispose audio player
     super.dispose();
   }
 
@@ -181,14 +121,45 @@ class _QuizScreenState extends State<QuizScreen> {
           onPressed: _showExitDialog,
         ),
         actions: [
-          // MUTE/UNMUTE BUTTON
+          // MUTE/UNMUTE BUTTON USING AUDIOSERVICE
+          IconButton(
+            icon: const Icon(Icons.bug_report, color: Colors.white),
+            onPressed: () {
+              debugPrint("=== AudioService Debug Info ===");
+              debugPrint("Testin all sound...");
+              AudioService().playCorrect();
+              Future.delayed(Duration(milliseconds: 500), () {
+                AudioService().playWrong();
+              });
+              Future.delayed(Duration(milliseconds: 1000), () {
+                AudioService().playFinish();
+              });
+              Future.delayed(Duration(milliseconds: 1500), () {
+                debugPrint("=== End of AudioService Debug Info ===");
+              });
+            },
+            tooltip: 'Debug AudioService',
+          ),
+          // MUTE/UNMUTE BUTTON USING AUDIOSERVICE
           IconButton(
             icon: Icon(
-              _isMuted ? Icons.volume_off : Icons.volume_up,
+              AudioService().isMuted ? Icons.volume_off : Icons.volume_up,
               color: Colors.white,
             ),
-            onPressed: _toggleMute,
-            tooltip: _isMuted ? 'Unmute sounds' : 'Mute sounds',
+            onPressed: () {
+              AudioService().toggleMute();
+              setState(() {}); // Refresh UI
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AudioService().isMuted
+                      ? 'Sounds muted 🔇'
+                      : 'Sounds unmuted 🔊'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+            tooltip: AudioService().isMuted ? 'Unmute sounds' : 'Mute sounds',
           ),
         ],
       ),
@@ -256,6 +227,7 @@ class _QuizScreenState extends State<QuizScreen> {
       ],
     );
   }
+
   // TIMER DISPLAY WIDGET
   Widget _buildTimerDisplay() {
     Color timerColor = Colors.green;
@@ -268,7 +240,7 @@ class _QuizScreenState extends State<QuizScreen> {
         color: timerColor.withAlpha(25),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: timerColor, width: 2),
-      ),// Timer display container
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -283,11 +255,10 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: CircularProgressIndicator(
                   value: _timeLeft / 20,
                   backgroundColor: Colors.grey[300],
-
                   valueColor: AlwaysStoppedAnimation<Color>(timerColor),
                   strokeWidth: 4,
-                ),// Circular progress indicator
-              ),// SizedBox for circular progress+
+                ),
+              ),
               Text(
                 '$_timeLeft',
                 style: TextStyle(
@@ -480,12 +451,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
         bool isCorrect = index == currentQuestion.correctAnswerIndex;
 
-        // PLAY SOUND BASED ON ANSWER
+        // PLAY SOUND USING AUDIOSERVICE
         if (isCorrect) {
-          _playCorrectSound(); // PLAY CORRECT SOUND
+          AudioService().playCorrect();
           _score++;
         } else {
-          _playWrongSound(); // PLAY WRONG SOUND
+          AudioService().playWrong();
         }
 
         _isAnswered = true;
@@ -534,8 +505,8 @@ class _QuizScreenState extends State<QuizScreen> {
         _startTimer();
       });
     } else {
-      // PLAY FINISH SOUND WHEN QUIZ ENDS
-      _playFinishSound();
+      // PLAY FINISH SOUND USING AUDIOSERVICE
+      AudioService().playFinish();
 
       final userEmail = authService.currentUserEmail;
 

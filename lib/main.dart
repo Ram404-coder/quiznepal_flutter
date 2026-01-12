@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:quiznepal/services/audio_service.dart';
 import 'screens/welcome_screen.dart';
 import 'services/auth_service.dart';
 import 'services/quiz_service.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'utils/colors.dart'; // Import NepalColors
 
 void main() async {
+  // Initialize for desktop platforms
+  _initializeDatabase();
+  await AudioService().initialize(); // Initialize audio service
+
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
+}
+
+void _initializeDatabase() {
+  try {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+
+    debugPrint("Database initialized for desktop platforms.");
+  } catch (e) {
+    debugPrint("Not a desktop platform or failed to initialize FFI: $e");
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -25,8 +42,6 @@ class MyApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (context) => QuizService()),
-        // Add other providers here if needed
-        // ChangeNotifierProvider(create: (context) => QuizService()),
       ],
       child: MaterialApp(
         title: 'QuizNepal',

@@ -1,10 +1,9 @@
-import 'dart:async';
-import 'package:flutter/material.dart'; // FLUTTER MATERIAL PACKAGE
-import 'package:audioplayers/audioplayers.dart'; // IMPORT AUDIO PLAYER PACKAGE
+import 'package:flutter/material.dart';
 import 'level_selection_screen.dart';
-import '../utils/colors.dart'; // IMPORT CUSTOM COLORS
+import '../utils/colors.dart';
+import '../services/audio_service.dart'; // Import AudioService
 
-// RESULTS SCREEN WIDGET
+// results_screen.dart
 class ResultsScreen extends StatefulWidget {
   final int score;
   final int totalQuestions;
@@ -21,39 +20,25 @@ class ResultsScreen extends StatefulWidget {
   State<ResultsScreen> createState() => _ResultsScreenState();
 }
 
-// STATE CLASS FOR RESULTS SCREEN
+// state class for ResultsScreen
 class _ResultsScreenState extends State<ResultsScreen> {
-  // ADD AUDIO PLAYER
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   @override
   void initState() {
     super.initState();
-    // PLAY CELEBRATION SOUND WHEN RESULTS SCREEN LOADS
+    // play result sound after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playResultSound();
     });
   }
 
-  // PLAY APPROPRIATE SOUND BASED ON SCORE
-  Future<void> _playResultSound() async {
-    try {
-      if (_percentage >= 80) {
-        await _audioPlayer.play(AssetSource('audio/finish.mp3'));
-      } else if (_percentage >= 60) {
-        await _audioPlayer.play(AssetSource('audio/correct.mp3'));
-      }
-      // No sound for low scores
-    } catch (e) {
-      debugPrint('Error playing result sound: $e');
+  // play sound based on performance
+  void _playResultSound() {
+    if (_percentage >= 80) {
+      AudioService().playFinish(); // Excellent score
+    } else if (_percentage >= 60) {
+      AudioService().playCorrect(); // Good score
     }
-  }
-
-// DISPOSE AUDIO PLAYER WHEN NOT NEEDED
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
+    // No sound for low scores
   }
 
   String get _levelTitle {
@@ -65,14 +50,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
         widget.level;
   }
 
-// CALCULATE PERCENTAGE SCORE
+  // CALCULATE PERCENTAGE SCORE
   int get _percentage => ((widget.score / widget.totalQuestions) * 100).round();
 
   String get _performanceText {
     if (_percentage >= 80) return '💡 Excellent!💡';
-    if (_percentage >= 60) return ' 😊Good Job!😊';
-    if (_percentage >= 40) return '🫥Not Bad!🫥';
-    return '📖Keep Practicing! 📖';
+    if (_percentage >= 60) return '😊 Good Job!😊';
+    if (_percentage >= 40) return '🫥 Not Bad!🫥';
+    return '📖 Keep Practicing! 📖';
   }
 
   Color get _performanceColor {
@@ -82,7 +67,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Colors.red;
   }
 
-// BUILD METHOD TO RENDER UI
+  // build to render results screen
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,6 +84,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Score Circle
               Container(
                 width: 150,
                 height: 150,
@@ -124,12 +110,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       style: const TextStyle(
                         fontSize: 18,
                         color: Colors.grey,
-                      ), // TEXT STYLE
+                      ),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 30),
+
+              // Performance Text
               Text(
                 _performanceText,
                 style: const TextStyle(
@@ -137,7 +126,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               Text(
                 'You completed the $_levelTitle level',
                 style: const TextStyle(
@@ -146,7 +137,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
+
               const SizedBox(height: 30),
+
+              // Stats Container
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -164,7 +158,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 40),
+
+              // Back to Levels Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -186,7 +183,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 16),
+
+              // Try Another Level Button
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacement(
@@ -201,6 +201,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   style: TextStyle(fontSize: 16),
                 ),
               ),
+
               const SizedBox(height: 10),
             ],
           ),
@@ -209,6 +210,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  // Build stat item widget
   Widget _buildStat(String label, int value, Color color) {
     return Column(
       children: [
